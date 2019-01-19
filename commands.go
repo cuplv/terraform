@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform/svchost"
 	"github.com/hashicorp/terraform/svchost/auth"
 	"github.com/hashicorp/terraform/svchost/disco"
+	"github.com/hashicorp/terraform/terraform"
 	"github.com/mitchellh/cli"
 )
 
@@ -29,6 +31,18 @@ const (
 	ErrorPrefix  = "e:"
 	OutputPrefix = "o:"
 )
+
+type myHook struct {
+	terraform.NilHook
+}
+
+func (h *myHook) PreApply(
+	n *terraform.InstanceInfo,
+	s *terraform.InstanceState,
+	d *terraform.InstanceDiff) (terraform.HookAction, error) {
+	fmt.Println("Doing apply now.")
+	return terraform.HookActionContinue, nil
+}
 
 func initCommands(config *Config, services *disco.Disco) {
 	var inAutomation bool
@@ -61,6 +75,16 @@ func initCommands(config *Config, services *disco.Disco) {
 		OverrideDataDir:     dataDir,
 
 		ShutdownCh: makeShutdownCh(),
+
+		ExtraHooks: []terraform.Hook{
+			&myHook{},
+			// &terraform.NilHook{
+			// 	PreApply: func(*InstanceInfo, *InstanceState, *InstanceDiff) (HookAction, error) {
+			// 		fmt.Println("hello world")
+			// 		return HookActionContinue, nil
+			// 	},
+			// },
+		},
 	}
 
 	// The command list is included in the terraform -help
