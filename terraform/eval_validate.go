@@ -71,6 +71,11 @@ func (n *EvalValidateProvider) Eval(ctx EvalContext) (interface{}, error) {
 	config := *n.Config
 
 	warns, errs := provider.Validate(config)
+
+	// Remove resource budget query results from warnings and
+	// store the info away somewhere
+	fmt.Println("This is where the resource budget query result is stored")
+
 	if len(warns) == 0 && len(errs) == 0 {
 		return nil, nil
 	}
@@ -219,6 +224,10 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 			"%s: resource name can only contain letters, numbers, "+
 				"dashes, and underscores.", n.ResourceName))
 	}
+
+	// Remove resource cost query results from warnings and store
+	// the info away somewhere
+	fmt.Println("This is where the resource cost query result is stored")
 
 	if (len(warns) == 0 || n.IgnoreWarnings) && len(errs) == 0 {
 		return nil, nil
