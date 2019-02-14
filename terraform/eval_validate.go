@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform/config"
 	"github.com/mitchellh/mapstructure"
@@ -70,11 +71,21 @@ func (n *EvalValidateProvider) Eval(ctx EvalContext) (interface{}, error) {
 	provider := *n.Provider
 	config := *n.Config
 
-	warns, errs := provider.Validate(config)
+	prewarns, errs := provider.Validate(config)
 
 	// Remove resource budget query results from warnings and
 	// store the info away somewhere
 	fmt.Println("This is where the resource budget query result is stored")
+
+	warns := make([]string, 0, len(prewarns))
+
+	for _, v := range prewarns {
+		if strings.HasPrefix(v, "boundsinfo:budget") {
+			fmt.Println(strings.Split(v, ";")[1])
+		} else {
+			warns = append(warns, v)
+		}
+	}
 
 	if len(warns) == 0 && len(errs) == 0 {
 		return nil, nil
@@ -205,16 +216,16 @@ type EvalValidateResource struct {
 func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 	provider := *n.Provider
 	cfg := *n.Config
-	var warns []string
+	var prewarns []string
 	var errs []error
 	// Provider entry point varies depending on resource mode, because
 	// managed resources and data resources are two distinct concepts
 	// in the provider abstraction.
 	switch n.ResourceMode {
 	case config.ManagedResourceMode:
-		warns, errs = provider.ValidateResource(n.ResourceType, cfg)
+		prewarns, errs = provider.ValidateResource(n.ResourceType, cfg)
 	case config.DataResourceMode:
-		warns, errs = provider.ValidateDataSource(n.ResourceType, cfg)
+		prewarns, errs = provider.ValidateDataSource(n.ResourceType, cfg)
 	}
 
 	// If the resource name doesn't match the name regular
@@ -228,6 +239,16 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 	// Remove resource cost query results from warnings and store
 	// the info away somewhere
 	fmt.Println("This is where the resource cost query result is stored")
+
+	warns := make([]string, 0, len(prewarns))
+
+	for _, v := range prewarns {
+		if strings.HasPrefix(v, "boundsinfo:cost") {
+			fmt.Println(strings.Split(v, ";")[1])
+		} else {
+			warns = append(warns, v)
+		}
+	}
 
 	if (len(warns) == 0 || n.IgnoreWarnings) && len(errs) == 0 {
 		return nil, nil
