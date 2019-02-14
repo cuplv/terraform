@@ -91,6 +91,7 @@ func (w *ContextGraphWalker) EnterPath(path []string) EvalContext {
 		},
 		InterpolaterVars:    w.interpolaterVars,
 		InterpolaterVarLock: &w.interpolaterVarLock,
+		BoundsInfoField:     InitBoundsInfo(),
 	}
 
 	w.contexts[key] = ctx

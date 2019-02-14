@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/config"
@@ -241,14 +242,18 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 	fmt.Println("This is where the resource cost query result is stored")
 
 	warns := make([]string, 0, len(prewarns))
+	cost := 0
 
 	for _, v := range prewarns {
 		if strings.HasPrefix(v, "boundsinfo:cost") {
-			fmt.Println(strings.Split(v, ";")[1])
+			cost, _ = strconv.Atoi(strings.Split(v, ";")[1])
 		} else {
 			warns = append(warns, v)
 		}
 	}
+
+	key := n.ResourceType + "." + n.ResourceName
+	ctx.BoundsInfo().Costs[key] = cost
 
 	if (len(warns) == 0 || n.IgnoreWarnings) && len(errs) == 0 {
 		return nil, nil

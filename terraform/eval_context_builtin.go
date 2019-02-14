@@ -43,6 +43,8 @@ type BuiltinEvalContext struct {
 	StateLock           *sync.RWMutex
 
 	once sync.Once
+
+	BoundsInfoField *BoundsInfo
 }
 
 func (ctx *BuiltinEvalContext) Stopped() <-chan struct{} {
@@ -315,6 +317,10 @@ func (ctx *BuiltinEvalContext) Diff() (*Diff, *sync.RWMutex) {
 
 func (ctx *BuiltinEvalContext) State() (*State, *sync.RWMutex) {
 	return ctx.StateValue, ctx.StateLock
+}
+
+func (ctx *BuiltinEvalContext) BoundsInfo() *BoundsInfo {
+	return ctx.BoundsInfoField
 }
 
 func (ctx *BuiltinEvalContext) init() {

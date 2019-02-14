@@ -112,6 +112,10 @@ func (n *EvalApplyPre) Eval(ctx EvalContext) (interface{}, error) {
 	}
 	state.init()
 
+	key := n.Info.Id
+	fmt.Println("Reading at PreEval time for " + n.Info.Id + ":")
+	fmt.Println(ctx.BoundsInfo().Costs[key])
+
 	if resourceHasUserVisibleApply(n.Info) {
 		// Call post-apply hook
 		err := ctx.Hook(func(h Hook) (HookAction, error) {

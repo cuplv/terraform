@@ -86,4 +86,19 @@ type EvalContext interface {
 	// State returns the global state as well as the lock that should
 	// be used to modify that state.
 	State() (*State, *sync.RWMutex)
+
+	// Bounds info
+	BoundsInfo() *BoundsInfo
+}
+
+type BoundsInfo struct {
+	Budget int
+	Costs  map[string]int
+}
+
+func InitBoundsInfo() *BoundsInfo {
+	return &BoundsInfo{
+		Budget: 0,
+		Costs:  make(map[string]int),
+	}
 }
