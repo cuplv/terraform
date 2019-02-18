@@ -74,19 +74,28 @@ func (n *EvalValidateProvider) Eval(ctx EvalContext) (interface{}, error) {
 
 	prewarns, errs := provider.Validate(config)
 
-	// Remove resource budget query results from warnings and
-	// store the info away somewhere
-	fmt.Println("This is where the resource budget query result is stored")
-
 	warns := make([]string, 0, len(prewarns))
+	budget := 0
 
 	for _, v := range prewarns {
 		if strings.HasPrefix(v, "boundsinfo:budget") {
-			fmt.Println(strings.Split(v, ";")[1])
+			budget, _ = strconv.Atoi(strings.Split(v, ";")[1])
 		} else {
 			warns = append(warns, v)
 		}
 	}
+
+	binfo := ctx.BoundsInfo()
+
+	binfo.Mux.Lock()
+	if !(binfo.BudgetSet) {
+		binfo.Budget = budget
+		binfo.BudgetSet = true
+		fmt.Println("Budget set.")
+	} else {
+		fmt.Println("Budget was already set.")
+	}
+	binfo.Mux.Unlock()
 
 	if len(warns) == 0 && len(errs) == 0 {
 		return nil, nil
@@ -237,10 +246,6 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 				"dashes, and underscores.", n.ResourceName))
 	}
 
-	// Remove resource cost query results from warnings and store
-	// the info away somewhere
-	fmt.Println("This is where the resource cost query result is stored")
-
 	warns := make([]string, 0, len(prewarns))
 	cost := 0
 
@@ -253,7 +258,13 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 	}
 
 	key := n.ResourceType + "." + n.ResourceName
-	ctx.BoundsInfo().Costs[key] = cost
+	binfo := ctx.BoundsInfo()
+
+	binfo.Mux.Lock()
+	if _, isSet := binfo.Costs[key]; !isSet {
+		binfo.Costs[key] = cost
+	}
+	binfo.Mux.Unlock()
 
 	if (len(warns) == 0 || n.IgnoreWarnings) && len(errs) == 0 {
 		return nil, nil

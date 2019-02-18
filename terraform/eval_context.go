@@ -92,13 +92,16 @@ type EvalContext interface {
 }
 
 type BoundsInfo struct {
-	Budget int
-	Costs  map[string]int
+	Budget    int
+	BudgetSet bool
+	Costs     map[string]int
+	Mux       sync.Mutex
 }
 
 func InitBoundsInfo() *BoundsInfo {
 	return &BoundsInfo{
-		Budget: 0,
-		Costs:  make(map[string]int),
+		Budget:    0,
+		BudgetSet: false,
+		Costs:     make(map[string]int),
 	}
 }

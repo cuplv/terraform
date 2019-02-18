@@ -113,8 +113,20 @@ func (n *EvalApplyPre) Eval(ctx EvalContext) (interface{}, error) {
 	state.init()
 
 	key := n.Info.Id
-	fmt.Println("Reading at PreEval time for " + n.Info.Id + ":")
-	fmt.Println(ctx.BoundsInfo().Costs[key])
+	binfo := ctx.BoundsInfo()
+
+	binfo.Mux.Lock()
+	if cost, ok := binfo.Costs[key]; ok {
+		binfo.Budget -= cost
+
+		if binfo.Budget < 0 {
+			// return error
+			fmt.Println("Resources exhausted; cannot apply.")
+			binfo.Mux.Unlock()
+			return nil, EvalEarlyExitError{}
+		}
+	}
+	binfo.Mux.Unlock()
 
 	if resourceHasUserVisibleApply(n.Info) {
 		// Call post-apply hook
